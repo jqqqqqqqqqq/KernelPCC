@@ -419,9 +419,9 @@ static void hystart_update(struct sock *sk, u32 delay)
 			ca->last_ack = now;
 			if ((s32)(now - ca->round_start) > ca->delay_min >> 4) {
 				ca->found |= HYSTART_ACK_TRAIN;
-				NET_INC_STATS_BH(sock_net(sk),
+				NET_INC_STATS(sock_net(sk),
 						 LINUX_MIB_TCPHYSTARTTRAINDETECT);
-				NET_ADD_STATS_BH(sock_net(sk),
+				NET_ADD_STATS(sock_net(sk),
 						 LINUX_MIB_TCPHYSTARTTRAINCWND,
 						 tp->snd_cwnd);
 				tp->snd_ssthresh = tp->snd_cwnd;
@@ -440,9 +440,9 @@ static void hystart_update(struct sock *sk, u32 delay)
 			if (ca->curr_rtt > ca->delay_min +
 			    HYSTART_DELAY_THRESH(ca->delay_min >> 3)) {
 				ca->found |= HYSTART_DELAY;
-				NET_INC_STATS_BH(sock_net(sk),
+				NET_INC_STATS(sock_net(sk),
 						 LINUX_MIB_TCPHYSTARTDELAYDETECT);
-				NET_ADD_STATS_BH(sock_net(sk),
+				NET_ADD_STATS(sock_net(sk),
 						 LINUX_MIB_TCPHYSTARTDELAYCWND,
 						 tp->snd_cwnd);
 				tp->snd_ssthresh = tp->snd_cwnd;
@@ -454,8 +454,10 @@ static void hystart_update(struct sock *sk, u32 delay)
 /* Track delayed acknowledgment ratio using sliding window
  * ratio = (15*ratio + sample) / 16
  */
-static void bictcp_acked(struct sock *sk, u32 cnt, s32 rtt_us)
+static void bictcp_acked(struct sock *sk, const struct ack_sample *sample)
 {
+	u32 cnt = sample->pkts_acked;
+        s32 rtt_us = sample->rtt_us;
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct bictcp *ca = inet_csk_ca(sk);
 	u32 delay;
